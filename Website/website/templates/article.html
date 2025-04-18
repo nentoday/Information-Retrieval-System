@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ article.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <a href="/" class="btn btn-secondary mb-4">← Back to Search</a>
+
+    <h1 class="mb-3">{{ article.title }}</h1>
+    <h6 class="text-muted mb-4">Article ID: {{ article.id }}</h6>
+
+    <p><strong>Original Text:</strong></p>
+    <div class="border p-3 mb-4 bg-white" style="white-space: pre-wrap;">{{ article.article_text }}</div>
+
+    <!-- Optional: Add translation here too with JS/Fetch if needed -->
+
+</div>
+</body>
+</html>
