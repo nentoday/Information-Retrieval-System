@@ -31,13 +31,24 @@ def translate_text(text, source_lang="ru", target_lang="en"):
 def index():
     return render_template("index.html")
 
+# Update search to include 'id'
 @app.route("/search")
 def search():
     keyword = request.args.get("q")
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT title, article_text  FROM cyberleninka_articles WHERE article_text LIKE %s", (f"%{keyword}%",))
+    cursor.execute("SELECT id, title, article_text FROM cyberleninka_articles WHERE article_text LIKE %s", (f"%{keyword}%",))
     results = cursor.fetchall()
     return jsonify(results)
+
+# New article detail route
+@app.route("/article/<int:article_id>")
+def article_detail(article_id):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM cyberleninka_articles WHERE id = %s", (article_id,))
+    article = cursor.fetchone()
+    if article:
+        return render_template("article.html", article=article)
+    return "Article not found", 404
 
 @app.route("/translate", methods=["POST"])
 def translate():
