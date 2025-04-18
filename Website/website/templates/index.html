@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+</head>
+<body>
+    <h1>Search</h1>
+    <input type="text" id="searchInput" placeholder="Enter your request...">
+    <button onclick="search()">Find</button>
+    <button onclick="translate()">Translate</button>
+
+    <ul id="results"></ul>
+
+<script>
+    let rawResults = [];  // store raw results
+
+    function search() {
+        const keyword = document.getElementById("searchInput").value;
+        fetch(`/search?q=${encodeURIComponent(keyword)}`)
+            .then(response => response.json())
+            .then(data => {
+                rawResults = data;
+                displayResults(data, false); // show without translation
+            })
+            .catch(error => console.error("Error:", error));
+    }
+
+    function translate() {
+        const translatedResults = rawResults.map(row => {
+            return fetch(`/translate`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ title: row.title, text: row.article_text })
+            })
+            .then(response => response.json());
+        });
+
+        Promise.all(translatedResults).then(data => {
+            displayResults(data, true); // show translated
+        });
+    }
+
+    function displayResults(data, isTranslated) {
+        const resultsList = document.getElementById("results");
+        resultsList.innerHTML = "";
+        data.forEach(row => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <strong>${isTranslated ? "EN" : "RU"} Title:</strong> ${isTranslated ? row.translated_title : row.title}<br>
+                <strong>${isTranslated ? "EN" : "RU"} Text:</strong> ${isTranslated ? row.translated_text : row.article_text}<br><br>
+            `;
+            resultsList.appendChild(li);
+        });
+    }
+</script>
+</body>
+</html>
