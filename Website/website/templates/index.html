@@ -9,18 +9,15 @@
 <div class="container mt-5">
     <h1 class="mb-4 text-center">🔍 Article Search</h1>
 
-    <div class="input-group mb-3">
+    <div class="input-group mb-4">
         <input type="text" class="form-control" id="searchInput" placeholder="Enter a keyword...">
         <button class="btn btn-primary" onclick="search()">Search</button>
-        <button class="btn btn-secondary" onclick="translate()">Translate Results</button>
     </div>
 
     <div id="results" class="row gy-4"></div>
 </div>
 
 <script>
-    let rawResults = [];
-
     function search() {
         const keyword = document.getElementById("searchInput").value.trim();
         if (!keyword) return;
@@ -28,66 +25,71 @@
         fetch(`/search?q=${encodeURIComponent(keyword)}`)
             .then(response => response.json())
             .then(data => {
-                rawResults = data;
-                displayResults(data, false);
+                displayResults(data);
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => console.error("Search error:", error));
     }
 
-    function translate() {
-        const translatedResults = rawResults.map(row => {
-            return fetch(`/translate`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ title: row.title, text: row.article_text })
-            }).then(response => response.json().then(t => ({
-                id: row.id,
-                title: row.title,
-                article_text: row.article_text,
-                translated_title: t.translated_title,
-                translated_text: t.translated_text
-            })));
-        });
-
-        Promise.all(translatedResults).then(data => {
-            displayResults(data, true);
-        });
-    }
-
-    function displayResults(data, isTranslated) {
+    function displayResults(data) {
         const resultsContainer = document.getElementById("results");
         resultsContainer.innerHTML = "";
 
-        data.forEach(row => {
+        data.forEach((row, index) => {
             const col = document.createElement("div");
             col.className = "col-12";
 
+            // Placeholder: if author/date is added to results, update this accordingly
+            const author = row.author || "Unknown Author";
+            const date = row.date || "Unknown Date";
+            const preview = row.article_text.slice(0, 300) + "...";
+
             col.innerHTML = `
-                <div class="card shadow-sm h-100">
+                <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="row">
+                            <!-- Original Column -->
                             <div class="col-md-6">
-                                <h6><strong>Original Title:</strong></h6>
-                                <p>${row.title}</p>
-                                <h6><strong>Original Text:</strong></h6>
-                                <p style="max-height: 100px; overflow-y: auto;">${row.article_text}</p>
+                                <h5>${row.title}</h5>
+                                <p><strong>Author:</strong> ${author}</p>
+                                <p><strong>Date:</strong> ${date}</p>
+                                <p>${preview}</p>
+                                <a class="btn btn-outline-primary btn-sm" href="/article/${row.id}" target="_blank">View Full Original</a>
                             </div>
-                            <div class="col-md-6 border-start">
-                                <h6><strong>Translated Title:</strong></h6>
-                                <p>${isTranslated ? row.translated_title : '<em>Click "Translate Results" to see</em>'}</p>
-                                <h6><strong>Translated Text:</strong></h6>
-                                <p style="max-height: 100px; overflow-y: auto;">
-                                    ${isTranslated ? row.translated_text : '<em>Click "Translate Results" to see</em>'}
-                                </p>
+
+                            <!-- Translated Column -->
+                            <div class="col-md-6 border-start" id="translated-${index}">
+                                <p><em>Translating title, author, and date...</em></p>
                             </div>
                         </div>
-                        <a class="btn btn-link mt-2" href="/article/${row.id}" target="_blank">View Full Article</a>
                     </div>
                 </div>
             `;
             resultsContainer.appendChild(col);
+
+            // Now trigger translation for each item
+            fetch("/translate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: row.title,
+                    text: "" // don't send the full body for now
+                })
+            })
+            .then(response => response.json())
+            .then(translated => {
+                const translatedDiv = document.getElementById(`translated-${index}`);
+                translatedDiv.innerHTML = `
+                    <h5>${translated.translated_title}</h5>
+                    <p><strong>Author:</strong> ${author}</p>
+                    <p><strong>Date:</strong> ${date}</p>
+                    <a class="btn btn-outline-success btn-sm" href="/article/${row.id}?lang=en" target="_blank">View Full Translated</a>
+                `;
+            })
+            .catch(err => {
+                console.error("Translation failed:", err);
+                const translatedDiv = document.getElementById(`translated-${index}`);
+                translatedDiv.innerHTML = `<p><em>Translation unavailable.</em></p>`;
+            });
         });
     }
 </script>
