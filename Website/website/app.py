@@ -14,7 +14,7 @@ db = mysql.connector.connect(
 )
 
 # DeepL API details
-api_key = '4d93da54-a114-47a0-b793-7bb490b09f52:fx'
+api_key = ''
 url = 'https://api-free.deepl.com/v2/translate'
 
 @app.route("/")
