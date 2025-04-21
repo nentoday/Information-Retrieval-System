@@ -6,14 +6,13 @@
 </head>
 <body>
     <h1>Search</h1>
-    <input type="text" id="searchInput" placeholder="Enter your request...">
+    <input type="text" id="searchInput" placeholder="Type your search here...">
     <button onclick="search()">Find</button>
-    <button onclick="translate()">Translate</button>
 
     <ul id="results"></ul>
 
 <script>
-    let rawResults = [];  // store raw results
+    let rawResults = [];
 
     function search() {
         const keyword = document.getElementById("searchInput").value;
@@ -21,39 +20,62 @@
             .then(response => response.json())
             .then(data => {
                 rawResults = data;
-                displayResults(data, false); // show without translation
+                showTitles(data);
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => console.error("Search error:", error));
     }
 
-    function translate() {
-        const translatedResults = rawResults.map(row => {
-            return fetch(`/translate`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ title: row.title, text: row.article_text })
-            })
-            .then(response => response.json());
-        });
-
-        Promise.all(translatedResults).then(data => {
-            displayResults(data, true); // show translated
-        });
-    }
-
-    function displayResults(data, isTranslated) {
+    function showTitles(data) {
         const resultsList = document.getElementById("results");
         resultsList.innerHTML = "";
-        data.forEach(row => {
+
+        data.forEach((row, index) => {
             const li = document.createElement("li");
-            li.innerHTML = `
-                <strong>${isTranslated ? "EN" : "RU"} Title:</strong> ${isTranslated ? row.translated_title : row.title}<br>
-                <strong>${isTranslated ? "EN" : "RU"} Text:</strong> ${isTranslated ? row.translated_text : row.article_text}<br><br>
+
+            const titleEl = document.createElement("div");
+            titleEl.innerHTML = `<strong style="cursor:pointer; color:blue">${row.title}</strong>`;
+            titleEl.addEventListener("click", () => {
+                const details = document.getElementById(`details-${index}`);
+                details.style.display = details.style.display === "none" ? "block" : "none";
+            });
+
+            const detailsDiv = document.createElement("div");
+            detailsDiv.id = `details-${index}`;
+            detailsDiv.style.display = "none";
+            detailsDiv.innerHTML = `
+                <p><strong>Оригінал:</strong> ${row.article_text}</p>
+                <button id="translate-btn-${index}">Translate to English</button>
+                <div id="translated-${index}" style="margin-top: 5px; color: green;"></div>
             `;
+
+            li.appendChild(titleEl);
+            li.appendChild(detailsDiv);
             resultsList.appendChild(li);
+
+            setTimeout(() => {
+                document.getElementById(`translate-btn-${index}`).addEventListener("click", () => {
+                    translate(index);
+                });
+            }, 0);
         });
+    }
+
+    function translate(index) {
+        const row = rawResults[index];
+        fetch("/translate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: row.title, text: row.article_text })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Translation result:", data);
+            document.getElementById(`translated-${index}`).innerHTML = `
+                <strong>Translated Title:</strong> ${data.translated_title}<br>
+                <strong>Translated Text:</strong> ${data.translated_text}
+            `;
+        })
+        .catch(error => console.error("Translation error:", error));
     }
 </script>
 </body>
