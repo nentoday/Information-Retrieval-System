@@ -12,11 +12,30 @@
     <h1 class="mb-3">{{ article.title }}</h1>
     <h6 class="text-muted mb-4">Article ID: {{ article.id }}</h6>
 
-    <p><strong>Original Text:</strong></p>
-    <div class="border p-3 mb-4 bg-white" style="white-space: pre-wrap;">{{ article.article_text }}</div>
+    <p><strong>Author:</strong> {{ article.author or "Unknown" }}</p>
+    <p><strong>Date:</strong> {{ article.date or "Unknown" }}</p>
 
-    <!-- Optional: Add translation here too with JS/Fetch if needed -->
+    {% if lang == "en" and fallback_chunks > 0 %}
+    <div class="alert alert-warning">
+        ⚠️ Some parts of this article could not be translated and were left in the original language.
+    </div>
+    {% endif %}
 
+    {% if lang == "en" %}
+    <p><strong>Translated Body:</strong></p>
+    {% else %}
+        <p><strong>Original Body:</strong></p>
+    {% endif %}
+
+    <div class="border p-3 mb-4 bg-white" style="white-space: pre-wrap;">
+        {{ article.article_text }}
+    </div>
+
+    {% if lang != "en" %}
+        <a class="btn btn-outline-success" href="/article/{{ article.id }}?lang=en">View Translated Version</a>
+    {% else %}
+        <a class="btn btn-outline-primary" href="/article/{{ article.id }}">View Original Version</a>
+    {% endif %}
 </div>
 </body>
 </html>
