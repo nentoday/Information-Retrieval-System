@@ -9,7 +9,7 @@ app = Flask(__name__)
 db = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="password",
+    password="yourpassword",
     database="cyberleninka"
 )
 
@@ -25,7 +25,7 @@ def index():
 def search():
     keyword = request.args.get("q")
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT DISTINCT id, title, article_text FROM cyberleninka_articles WHERE article_text LIKE %s", (f"%{keyword}%",))
+    cursor.execute("SELECT DISTINCT id, title, article_text, authors FROM cyberleninka_articles WHERE article_text LIKE %s", (f"%{keyword}%",))
     results = cursor.fetchall()
     return jsonify(results)
 
