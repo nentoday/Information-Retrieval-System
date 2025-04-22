@@ -12,7 +12,7 @@
     <h1 class="mb-3">{{ article.title }}</h1>
     <h6 class="text-muted mb-4">Article ID: {{ article.id }}</h6>
 
-    <p><strong>Author:</strong> {{ article.author or "Unknown" }}</p>
+    <p><strong>Author:</strong> {{ article.authors or "Unknown" }}</p>
     <p><strong>Date:</strong> {{ article.date or "Unknown" }}</p>
 
     {% if lang == "en" and fallback_chunks > 0 %}
